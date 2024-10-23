@@ -18,7 +18,7 @@
 
                     @role('manager|hod|chief_editor|admin|hr')
                     <x-nav-link :href="route('leave.allRecords')" :active="request()->routeIs('leave.allRecords')">
-                        {{ __('All Records') }}
+                        {{ __('All Applications') }}
                     </x-nav-link>
                     @endrole
                 

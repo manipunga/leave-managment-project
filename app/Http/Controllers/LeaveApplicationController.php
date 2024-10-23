@@ -15,7 +15,8 @@ class LeaveApplicationController extends Controller
     public function index()
     {
         // Get the authenticated user's leave applications
-        $leaveApplications = LeaveApplication::where('user_id', Auth::id())->get();
+        $leaveApplications = LeaveApplication::where('user_id', Auth::id())
+        ->get();
 
         // Get the total allowed leaves from AppSetting
         $appSetting = AppSetting::first();
@@ -32,27 +33,27 @@ class LeaveApplicationController extends Controller
 
     // Admin can view and edit all leave applications
     if ($user->hasRole('admin')) {
-        $leaveApplications = LeaveApplication::all();
+        $leaveApplications = LeaveApplication::with('user.departments')->get();
     }
     // Managers can see leave applications of subordinates in their department(s)
     elseif ($user->hasRole('manager')) {
-        $leaveApplications = LeaveApplication::whereHas('user.departments', function ($query) use ($user) {
+        $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
             $query->whereIn('department_id', $user->departments->pluck('id'));
         })->get();
     }
     // HODs can see leave applications of employees and managers in their department(s)
     elseif ($user->hasRole('hod')) {
-        $leaveApplications = LeaveApplication::whereHas('user.departments', function ($query) use ($user) {
+        $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
             $query->whereIn('department_id', $user->departments->pluck('id'));
         })->get();
     }
     // HR can see all leave applications
     elseif ($user->hasRole('hr')) {
-        $leaveApplications = LeaveApplication::all();
+        $leaveApplications = LeaveApplication::with('user.departments')->get();
     }
     // Chief Editors can see all leave applications
     elseif ($user->hasRole('chief_editor')) {
-        $leaveApplications = LeaveApplication::all();
+        $leaveApplications = LeaveApplication::with('user.departments')->get();
     }
 
     // Set the title for the page
@@ -205,6 +206,56 @@ class LeaveApplicationController extends Controller
         ]);
     
         return redirect()->back()->with('success', 'Leave status updated.');
+    }
+
+    public function show(LeaveApplication $leaveApplication)
+    {
+        $user = auth()->user();
+
+        // Get the total allowed leaves from AppSetting
+        $appSetting = AppSetting::first();
+
+        $leaveApplications = LeaveApplication::with('user.departments')->where('user_id', $leaveApplication->user_id)->get();
+
+
+        // If user is Manager or HOD, they can partially approve or reject the application
+        if ($user->hasRole('manager') || $user->hasRole('hod')) {
+            return view('leave.show', compact('leaveApplication', 'appSetting', 'leaveApplications'))->with('canPartiallyApprove', true);
+        }
+
+        // If user is Chief Editor or Admin, they can fully approve or reject the application
+        if ($user->hasRole('chief_editor') || $user->hasRole('admin')) {
+            return view('leave.show', compact('leaveApplication', 'appSetting', 'leaveApplications'))->with('canFullyApprove', true);
+        }
+
+        return redirect()->route('leave.index')->with('error', 'Unauthorized to view this application');
+    }
+
+    public function partiallyApprove(LeaveApplication $leaveApplication)
+    {
+        // Only managers and HODs can partially approve
+        if (auth()->user()->hasRole('manager') || auth()->user()->hasRole('hod')) {
+            $leaveApplication->update(['status' => 'partially_approved']);
+            return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application partially approved.');
+        }
+        return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
+    }
+
+    public function approve(LeaveApplication $leaveApplication)
+    {
+        // Only chief editors and admins can fully approve
+        if (auth()->user()->hasRole('chief_editor') || auth()->user()->hasRole('admin')) {
+            $leaveApplication->update(['status' => 'approved']);
+            return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application approved.');
+        }
+        return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
+    }
+
+    public function reject(LeaveApplication $leaveApplication)
+    {
+        // All roles (manager, HOD, chief editor, admin) can reject
+        $leaveApplication->update(['status' => 'rejected']);
+        return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application rejected.');
     }
 
 }
