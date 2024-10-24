@@ -41,6 +41,11 @@
             @endphp
             <p><strong>Leaves Taken:</strong> {{ $leavesTaken }} days</p>
             <p><strong>Remaining Leaves:</strong> {{ $remainingLeaves }} days</p>
+
+            <div class="mt-6">
+                <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                <textarea id="remarks" name="remarks" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Enter remarks">{{ $leaveApplication->remarks }}</textarea>
+            </div>
         </div>
 
         <!-- Approval Section -->
@@ -74,6 +79,9 @@
                     <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600">Reject</button>
                 </form>
             @endif
+
+            <a href="{{ route('leave.allRecords') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Back</a>
+
         </div>
     </div>
 </x-app-layout>

@@ -18,6 +18,7 @@ class LeaveApplication extends Model
         'applied_at',
         'modified_by',
         'modified_at',
+        'remarks',
     ];
 
     public function user()

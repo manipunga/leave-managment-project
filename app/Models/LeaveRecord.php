@@ -14,6 +14,7 @@ class LeaveRecord extends Model
         'user_id',
         'action',
         'action_at',
+        'remarks',
     ];
 
     /**

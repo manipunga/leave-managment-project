@@ -231,30 +231,30 @@ class LeaveApplicationController extends Controller
         return redirect()->route('leave.index')->with('error', 'Unauthorized to view this application');
     }
 
-    public function partiallyApprove(LeaveApplication $leaveApplication)
+    public function partiallyApprove(Request $request, LeaveApplication $leaveApplication)
     {
         // Only managers and HODs can partially approve
         if (auth()->user()->hasRole('manager') || auth()->user()->hasRole('hod')) {
-            $leaveApplication->update(['status' => 'partially_approved']);
+            $leaveApplication->update(['status' => 'partially_approved', 'remarks' => $request->remarks]);
             return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application partially approved.');
         }
         return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
     }
 
-    public function approve(LeaveApplication $leaveApplication)
+    public function approve(Request $request, LeaveApplication $leaveApplication)
     {
         // Only chief editors and admins can fully approve
         if (auth()->user()->hasRole('chief_editor') || auth()->user()->hasRole('admin')) {
-            $leaveApplication->update(['status' => 'approved']);
+            $leaveApplication->update(['status' => 'approved', 'remarks' => $request->remarks]);
             return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application approved.');
         }
         return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
     }
 
-    public function reject(LeaveApplication $leaveApplication)
+    public function reject(Request $request, LeaveApplication $leaveApplication)
     {
         // All roles (manager, HOD, chief editor, admin) can reject
-        $leaveApplication->update(['status' => 'rejected']);
+        $leaveApplication->update(['status' => 'rejected', 'remarks' => $request->remarks]);
         return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application rejected.');
     }
 
