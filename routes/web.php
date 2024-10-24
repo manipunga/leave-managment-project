@@ -57,31 +57,45 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-});
-
-Route::middleware(['auth', 'role:admin'])->group(function () {
-
+    Route::middleware('role:admin')->group(function () {
 
     // User management
-    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/create', [AdminUserController::class, 'create'])->name('admin.users.create');
-    Route::post('/admin/users', [AdminUserController::class, 'store'])->name('admin.users.store');
-    Route::get('/admin/users/{user}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/admin/users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
 
-    // Department management
-    Route::get('/admin/departments', [AdminDepartmentController::class, 'index'])->name('admin.departments.index');
-    Route::get('/admin/departments/create', [AdminDepartmentController::class, 'create'])->name('admin.departments.create');
-    Route::post('/admin/departments', [AdminDepartmentController::class, 'store'])->name('admin.departments.store');
-    Route::get('/admin/departments/{department}/edit', [AdminDepartmentController::class, 'edit'])->name('admin.departments.edit');
-    Route::put('/admin/departments/{department}', [AdminDepartmentController::class, 'update'])->name('admin.departments.update');
-    Route::delete('/admin/departments/{department}', [AdminDepartmentController::class, 'destroy'])->name('admin.departments.destroy');
+    });
 
-    // App settings management
-    Route::get('/admin/settings', [AdminAppSettingController::class, 'index'])->name('admin.settings.index');
-    Route::get('/admin/settings/edit', [AdminAppSettingController::class, 'edit'])->name('admin.settings.edit');
-    Route::put('/admin/settings', [AdminAppSettingController::class, 'update'])->name('admin.settings.update');
+
+    Route::middleware('role:admin|hr')->group(function () {
+    // User management
+    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
+    Route::get('/admin/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');
+    Route::get('/admin/users/{user}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
+    Route::post('/admin/users', [AdminUserController::class, 'store'])->name('admin.users.store');
+    Route::put('/admin/users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
+    
+    });
+
+    Route::middleware('role:admin')->group(function () {
+
+   
+       // Department management
+       Route::get('/admin/departments', [AdminDepartmentController::class, 'index'])->name('admin.departments.index');
+       Route::get('/admin/departments/create', [AdminDepartmentController::class, 'create'])->name('admin.departments.create');
+       Route::post('/admin/departments', [AdminDepartmentController::class, 'store'])->name('admin.departments.store');
+       Route::get('/admin/departments/{department}/edit', [AdminDepartmentController::class, 'edit'])->name('admin.departments.edit');
+       Route::put('/admin/departments/{department}', [AdminDepartmentController::class, 'update'])->name('admin.departments.update');
+       Route::delete('/admin/departments/{department}', [AdminDepartmentController::class, 'destroy'])->name('admin.departments.destroy');
+   
+       // App settings management
+       Route::get('/admin/settings', [AdminAppSettingController::class, 'index'])->name('admin.settings.index');
+       Route::get('/admin/settings/edit', [AdminAppSettingController::class, 'edit'])->name('admin.settings.edit');
+       Route::put('/admin/settings', [AdminAppSettingController::class, 'update'])->name('admin.settings.update');
+   });
+
+
 });
+
+
 
 require __DIR__.'/auth.php';

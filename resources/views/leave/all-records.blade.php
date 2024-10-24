@@ -3,6 +3,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">All Leave Applications</h2>
 
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
             <table class="min-w-full table-auto border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
@@ -71,6 +72,7 @@
                     No leave applications found.
                 </div>
             @endif
+        </div>
         </div>
     </div>
 </x-app-layout>

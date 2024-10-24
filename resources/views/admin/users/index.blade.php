@@ -5,30 +5,38 @@
 
         <!-- Add New User Button -->
         <div class="mb-6 flex justify-end">
+        @role('admin')
             <a href="{{ route('admin.users.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-300">
                 Add New User
             </a>
+        @endrole
         </div>
 
         <!-- Users Table -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
             <table class="min-w-full table-auto border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-medium text-gray-700">Name</th>
                         <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-medium text-gray-700">Email</th>
+                        @role('admin')
                         <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-medium text-gray-700">Role</th>
+                        @endrole
                         <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-medium text-gray-700">Departments</th>
                         <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-medium text-gray-700">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
                     @foreach ($users as $user)
+                    @if(!Auth::user()->hasRole('hr') || !$user->hasRole('admin'))
+
                         <tr>
                             <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ $user->name }}</td>
                             <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ $user->email }}</td>
+                            @role('admin')
                             <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ ucfirst($user->role) }}</td>
-
+                            @endrole
                             <!-- Displaying User Departments -->
                             <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
                                 @if($user->departments)
@@ -41,8 +49,9 @@
                             </td>
 
                             <td class="px-6 py-4 border-b border-gray-200 text-sm flex items-center space-x-4">
+                                <a href="{{ route('admin.users.show', $user) }}" class="text-blue-500 hover:text-blue-700">View</a>
                                 <a href="{{ route('admin.users.edit', $user) }}" class="text-blue-500 hover:text-blue-700">Edit</a>
-
+                                @role('admin')
                                 <!-- Alpine.js Wrapper for Delete Confirmation Modal -->
                                 <div x-data="{ openModal: false }">
                                     <!-- Delete Button to Open Modal -->
@@ -93,9 +102,11 @@
                                         </div>
                                     </div>
                                     <!-- End of Confirmation Modal -->
+                                    @endrole
                                 </div>
                             </td>
                         </tr>
+                        @endif
                     @endforeach
                 </tbody>
             </table>
@@ -105,6 +116,7 @@
                     No users available.
                 </div>
             @endif
+        </div>
         </div>
     </div>
 </x-app-layout>

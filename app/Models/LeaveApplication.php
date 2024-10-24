@@ -30,4 +30,11 @@ class LeaveApplication extends Model
     {
         return $this->belongsTo(User::class, 'modified_by');
     }
+
+    public function leaveRecords()
+    {
+        return $this->hasMany(LeaveRecord::class);
+    }
+
+    
 }

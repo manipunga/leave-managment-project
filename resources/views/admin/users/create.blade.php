@@ -37,6 +37,66 @@
                     @enderror
                 </div>
 
+                                <!-- CNIC -->
+                                <div>
+                    <label for="cnic" class="block text-sm font-medium text-gray-700">CNIC</label>
+                    <input 
+                        type="text" 
+                        name="cnic" 
+                        id="cnic" 
+                        value="{{ old('cnic') }}" 
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                        >
+                    @error('cnic')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- Date of Birth -->
+                <div>
+                    <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <input 
+                        type="date" 
+                        name="dob" 
+                        id="dob" 
+                        value="{{ old('dob') }}" 
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                        >
+                    @error('dob')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- Joining Date -->
+                <div>
+                    <label for="joining_date" class="block text-sm font-medium text-gray-700">Joining Date</label>
+                    <input 
+                        type="date" 
+                        name="joining_date" 
+                        id="joining_date" 
+                        value="{{ old('joining_date') }}" 
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                        >
+                    @error('joining_date')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- Salary -->
+                <div>
+                    <label for="salary" class="block text-sm font-medium text-gray-700">Salary</label>
+                    <input 
+                        type="number" 
+                        name="salary" 
+                        id="salary" 
+                        value="{{ old('salary') }}" 
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                        >
+                    @error('salary')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <!-- Password -->
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
@@ -74,7 +134,7 @@
                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         @foreach($roles as $role)
                             <option value="{{ $role->name }}" {{ old('role') == $role->name ? 'selected' : '' }}>
-                                {{ $role->name }}
+                            {{ ucwords(str_replace('_', ' ', $role->name)) }}
                             </option>
                         @endforeach
                     </select>
@@ -103,10 +163,23 @@
                     <small class="text-gray-500">Hold down the Ctrl (Windows) or Command (Mac) button to select multiple options.</small>
                 </div>
 
+                <div>
+                    <label for="designation" class="block text-sm font-medium text-gray-700">Designation</label>
+                    <input 
+                        type="text" 
+                        name="designation" 
+                        id="designation" 
+                        value="{{ old('designation') }}" 
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    @error('designation')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <!-- Submit and Back Buttons -->
                 <div class="flex justify-end space-x-4">
-                    <a href="{{ route('admin.users.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Back</a>
                     <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600">Create User</button>
+                    <a href="{{ route('admin.users.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Back</a>
                 </div>
             </form>
         </div>

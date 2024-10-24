@@ -32,4 +32,10 @@ class LeaveRecord extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 }

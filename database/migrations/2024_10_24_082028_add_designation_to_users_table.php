@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('leave_records', function (Blueprint $table) {
-            $table->text('remarks')->nullable(); // Add remarks field
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('designation')->nullable(); 
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('leave_records', function (Blueprint $table) {
-            $table->dropColumn('remarks');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('designation');
         });
     }
 };

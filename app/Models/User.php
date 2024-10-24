@@ -26,6 +26,7 @@ class User extends Authenticatable
         'salary',
         'dob',
         'cnic',
+        'designation',
     ];
 
     /**

@@ -16,21 +16,48 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Leave Applications</h2>
 
         <!-- Leave Balance Section -->
-        @php
-            $totalLeavesAllowed = $appSetting->total_leaves;
-            $leavesTaken = $leaveApplications->sum(function($leave) {
-                $startDate = \Carbon\Carbon::parse($leave->start_date);
-                $endDate = \Carbon\Carbon::parse($leave->end_date);
-                return $startDate->diffInDays($endDate) + 1;
-            });
-            $remainingLeaves = $totalLeavesAllowed - $leavesTaken;
-        @endphp
-
-        <div class="mb-6">
-            <p class="text-lg font-semibold text-gray-700">Total Leaves Allowed: {{ $totalLeavesAllowed }}</p>
-            <p class="text-lg font-semibold text-green-500">Leaves Taken: {{ $leavesTaken }}</p>
-            <p class="text-lg font-semibold text-blue-500">Remaining Leaves: {{ $remainingLeaves }}</p>
+        <div class="bg-white shadow-md rounded-lg p-6 mb-5">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Leave Statistics</h2>
+            @php
+                $totalLeavesAllowed = $appSetting->total_leaves;
+                $approvedLeaves = $leaveApplications->where('status', 'approved')->sum(function($leave) {
+                    $startDate = \Carbon\Carbon::parse($leave->start_date);
+                    $endDate = \Carbon\Carbon::parse($leave->end_date);
+                    return $startDate->diffInDays($endDate) + 1;
+                });
+                $pendingLeaves = $leaveApplications->where('status', 'pending')->sum(function($leave) {
+                    $startDate = \Carbon\Carbon::parse($leave->start_date);
+                    $endDate = \Carbon\Carbon::parse($leave->end_date);
+                    return $startDate->diffInDays($endDate) + 1;
+                });
+                $partiallyApprovedLeaves = $leaveApplications->where('status', 'partially_approved')->sum(function($leave) {
+                    $startDate = \Carbon\Carbon::parse($leave->start_date);
+                    $endDate = \Carbon\Carbon::parse($leave->end_date);
+                    return $startDate->diffInDays($endDate) + 1;
+                });
+                $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+            @endphp
+            <div class="grid grid-cols-4 gap-6 text-center">
+                <div class="p-4 bg-green-100 rounded-lg">
+                    <strong class="text-green-600 text-xl">{{ $approvedLeaves }} days</strong>
+                    <p class="text-gray-600">Approved Leaves</p>
+                </div>
+                <div class="p-4 bg-yellow-100 rounded-lg">
+                    <strong class="text-yellow-600 text-xl">{{ $pendingLeaves }} days</strong>
+                    <p class="text-gray-600">Pending Leaves</p>
+                </div>
+                <div class="p-4 bg-blue-100 rounded-lg">
+                    <strong class="text-blue-600 text-xl">{{ $partiallyApprovedLeaves }} days</strong>
+                    <p class="text-gray-600">Partially Approved</p>
+                </div>
+                <div class="p-4 bg-red-100 rounded-lg">
+                    <strong class="text-red-600 text-xl">{{ $remainingLeaves }} days</strong>
+                    <p class="text-gray-600">Remaining Leaves</p>
+                </div>
+            </div>
         </div>
+
+
 
         <!-- Apply for Leave Button -->
         <div class="mb-6 flex justify-end">
@@ -41,6 +68,7 @@
 
         <!-- Leave Applications Table -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
+          <div class="overflow-x-auto">
             <table class="min-w-full table-auto border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
@@ -99,6 +127,7 @@
                     You haven't applied for any leaves yet.
                 </div>
             @endif
+        </div>
         </div>
     </div>
 </x-app-layout>

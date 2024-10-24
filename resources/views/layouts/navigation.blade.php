@@ -26,14 +26,17 @@
                     <x-nav-link :href="route('admin.departments.index')" :active="request()->routeIs('admin.departments.index')">
                         {{ __('Departments') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">
-                        {{ __('Users') }}
-                    </x-nav-link>
+
                     <x-nav-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.index')">
                         {{ __('App Settings') }}
                     </x-nav-link>
                     @endrole
-                
+
+                    @role('admin|hr')
+                    <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">
+                        {{ __('Users') }}
+                    </x-nav-link>
+                    @endrole
                 </div>
             </div>
 

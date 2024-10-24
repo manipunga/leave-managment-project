@@ -71,7 +71,7 @@ class LeaveApplicationController extends Controller
         $totalLeavesAllowed = $appSetting->total_leaves;
     
         $leavesTaken = LeaveApplication::where('user_id', Auth::id())
-            ->whereIn('status', ['approved', 'partially_approved'])
+            ->whereIn('status', ['approved'])
             ->sum(\DB::raw('DATEDIFF(end_date, start_date) + 1'));
     
         $remainingLeaves = $totalLeavesAllowed - $leavesTaken;
@@ -103,7 +103,7 @@ class LeaveApplicationController extends Controller
         $totalLeavesAllowed = $appSetting->total_leaves;
 
         $leavesTaken = LeaveApplication::where('user_id', Auth::id())
-            ->whereIn('status', ['approved', 'partially_approved'])
+            ->whereIn('status', ['approved'])
             ->sum(\DB::raw('DATEDIFF(end_date, start_date) + 1'));
 
         $remainingLeaves = $totalLeavesAllowed - $leavesTaken;
@@ -121,14 +121,6 @@ class LeaveApplicationController extends Controller
             'end_date' => $request->end_date,
             'status' => 'pending',
             'applied_at' => now(),
-        ]);
-
-        // Log the action in leave_records
-        LeaveRecord::create([
-            'leave_application_id' => $leaveApplication->id,
-            'user_id' => Auth::id(),
-            'action' => 'applied',
-            'action_at' => now(),
         ]);
 
         return redirect()->route('leave.index')->with('success', 'Leave application submitted successfully.');
@@ -217,6 +209,9 @@ class LeaveApplicationController extends Controller
 
         $leaveApplications = LeaveApplication::with('user.departments')->where('user_id', $leaveApplication->user_id)->get();
 
+        // Load related leave records
+        $leaveApplication->load('leaveRecords.updatedBy'); // Assuming leaveRecords has a relationship with updatedBy (User)
+
 
         // If user is Manager or HOD, they can partially approve or reject the application
         if ($user->hasRole('manager') || $user->hasRole('hod')) {
@@ -236,6 +231,15 @@ class LeaveApplicationController extends Controller
         // Only managers and HODs can partially approve
         if (auth()->user()->hasRole('manager') || auth()->user()->hasRole('hod')) {
             $leaveApplication->update(['status' => 'partially_approved', 'remarks' => $request->remarks]);
+
+            // Log the action in leave_records
+            LeaveRecord::create([
+                'leave_application_id' => $leaveApplication->id,
+                'user_id' => Auth::id(),
+                'action' => 'partially_approved',
+                'action_at' => now(),
+            ]);
+
             return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application partially approved.');
         }
         return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
@@ -246,6 +250,15 @@ class LeaveApplicationController extends Controller
         // Only chief editors and admins can fully approve
         if (auth()->user()->hasRole('chief_editor') || auth()->user()->hasRole('admin')) {
             $leaveApplication->update(['status' => 'approved', 'remarks' => $request->remarks]);
+
+            // Log the action in leave_records
+            LeaveRecord::create([
+                'leave_application_id' => $leaveApplication->id,
+                'user_id' => Auth::id(),
+                'action' => 'approved',
+                'action_at' => now(),
+            ]);
+
             return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application approved.');
         }
         return redirect()->route('leave.show', $leaveApplication)->with('error', 'Unauthorized action.');
