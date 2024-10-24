@@ -45,16 +45,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leave', [LeaveApplicationController::class, 'index'])->name('leave.index');
     Route::get('/leave/create', [LeaveApplicationController::class, 'create'])->name('leave.create');
     Route::post('/leave', [LeaveApplicationController::class, 'store'])->name('leave.store');
-    Route::patch('/leaveApplications/{leaveApplication}/partially-approve', [LeaveApplicationController::class, 'partiallyApprove'])->name('leaveApplications.partiallyApprove');
-    Route::patch('/leaveApplications/{leaveApplication}/approve', [LeaveApplicationController::class, 'approve'])->name('leaveApplications.approve');
-    Route::patch('/leaveApplications/{leaveApplication}/reject', [LeaveApplicationController::class, 'reject'])->name('leaveApplications.reject');
+    Route::post('/leaveApplications/{leaveApplication}/reject', [LeaveApplicationController::class, 'reject'])->name('leaveApplications.reject');
+    Route::post('/leaveApplications/{leaveApplication}/approve', [LeaveApplicationController::class, 'approve'])->name('leaveApplications.approve');
+    Route::post('/leaveApplications/{leaveApplication}/partially-approve', [LeaveApplicationController::class, 'partiallyApprove'])->name('leaveApplications.partiallyApprove');
     Route::get('/leave/{leaveApplication}', [LeaveApplicationController::class, 'show'])->name('leave.show');
 
 
     // Managers, HODs, and chief editors can approve/reject leaves
-    Route::middleware('role:manager|hod|chief_editor')->group(function () {
-        Route::patch('/leave/{leaveApplication}/status', [LeaveApplicationController::class, 'updateStatus'])->name('leave.update.status');
-    });
+    // Route::middleware('role:manager|hod|chief_editor')->group(function () {
+    //     Route::patch('/leave/{leaveApplication}/status', [LeaveApplicationController::class, 'updateStatus'])->name('leave.update.status');
+    // });
 
 
     Route::middleware('role:admin')->group(function () {

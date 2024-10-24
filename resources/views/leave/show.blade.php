@@ -71,13 +71,11 @@
             </div>
 
             <!-- Remarks -->
-
             <div>
                 <h3 class="text-lg font-semibold text-gray-600">Remarks</h3>
-                <textarea id="remarks" name="remarks" rows="4" class="block w-full mt-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Enter remarks" {{ ((isset($canPartiallyApprove) && $leaveApplication->status != 'partially_approved') || (isset($canFullyApprove) && $leaveApplication->status != 'approved')) ? '' : 'disabled' }}>{{ $leaveApplication->remarks }}</textarea>
+                <textarea id="remarks" x-model="remarks" name="remarks" rows="4" class="block w-full mt-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Enter remarks" {{ ((isset($canPartiallyApprove) && $leaveApplication->status != 'partially_approved') || (isset($canFullyApprove) && $leaveApplication->status != 'approved') && $leaveApplication->status != 'rejected' && $leaveApplication->status != 'cancelled') ? '' : 'disabled' }}>{{ $leaveApplication->remarks }}</textarea>
             </div>
         </div>
-
 
         @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('chief_editor'))
             <div class="bg-gray-50 rounded-lg p-6 mb-6">
@@ -97,7 +95,7 @@
                         <tbody class="bg-white">
                             @foreach($leaveApplication->leaveRecords as $record)
                                 <tr>
-                                    <td class="px-6 py-4 text-sm text-gray-900">{{ ucfirst($record->status) }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">{{ ucfirst($record->action) }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ $record->updatedBy->name }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ $record->remarks }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ $record->updated_at->format('d M Y') }}</td>
@@ -109,9 +107,8 @@
             </div>
         @endif
 
-
-<!-- Approval Section -->
-<div class="flex mt-6" x-data="{ showModal: false, action: '' }">
+        <!-- Approval Section -->
+<div class="flex mt-6" x-data="{ showModal: false, action: '', remarks: '' }">
     <!-- Confirmation Modal -->
     <div x-show="showModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg">
@@ -121,31 +118,32 @@
                 <button @click="showModal = false" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</button>
                 <form x-ref="confirmForm" method="POST">
                     @csrf
-                    @method('PATCH')
+                    <input type="hidden" name="remarks" :value="remarks">
                     <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" x-text="action"></button>
                 </form>
             </div>
         </div>
     </div>
 
-    @if(isset($canPartiallyApprove) && $leaveApplication->status != 'partially_approved')
-        <button @click="action = 'Partially Approve'; $refs.confirmForm.action='{{ route('leaveApplications.partiallyApprove', $leaveApplication->id) }}'; showModal = true" 
+    <!-- Buttons to trigger modal -->
+    @if(isset($canPartiallyApprove) && $leaveApplication->status != 'partially_approved' && $leaveApplication->status != 'rejected' && $leaveApplication->status != 'cancelled') 
+        <button @click="action = 'Partially Approve'; $refs.confirmForm.action='{{ route('leaveApplications.partiallyApprove', $leaveApplication->id) }}'; remarks = document.getElementById('remarks').value; showModal = true" 
             class="bg-blue-500 text-white mr-5 px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition duration-300">
             Partially Approve
         </button>
-        <button @click="action = 'Reject'; $refs.confirmForm.action='{{ route('leaveApplications.reject', $leaveApplication->id) }}'; showModal = true" 
+        <button @click="action = 'Reject'; $refs.confirmForm.action='{{ route('leaveApplications.reject', $leaveApplication->id) }}'; remarks = document.getElementById('remarks').value; showModal = true" 
             class="bg-red-500 text-white mr-5 px-4 py-2 rounded-lg shadow-lg hover:bg-red-600 transition duration-300">
             Reject
         </button>
     @endif
 
-    @if(isset($canFullyApprove) && $leaveApplication->status != 'approved')
-        <button @click="action = 'Approve'; $refs.confirmForm.action='{{ route('leaveApplications.approve', $leaveApplication->id) }}'; showModal = true" 
-            class="bg-green-500 mr-5 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-600 transition duration-300">
+    @if(isset($canFullyApprove) && $leaveApplication->status != 'approved' && $leaveApplication->status != 'rejected' && $leaveApplication->status != 'cancelled')
+        <button @click="action = 'Approve'; $refs.confirmForm.action='{{ route('leaveApplications.approve', $leaveApplication->id) }}'; remarks = document.getElementById('remarks').value; showModal = true" 
+            class="bg-green-500 text-white mr-5 px-4 py-2 rounded-lg shadow-lg hover:bg-green-600 transition duration-300">
             Approve
         </button>
-        <button @click="action = 'Reject'; $refs.confirmForm.action='{{ route('leaveApplications.reject', $leaveApplication->id) }}'; showModal = true" 
-            class="bg-red-500 mr-5 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-600 transition duration-300">
+        <button @click="action = 'Reject'; $refs.confirmForm.action='{{ route('leaveApplications.reject', $leaveApplication->id) }}'; remarks = document.getElementById('remarks').value; showModal = true" 
+            class="bg-red-500 text-white mr-5 px-4 py-2 rounded-lg shadow-lg hover:bg-red-600 transition duration-300">
             Reject
         </button>
     @endif
@@ -153,5 +151,16 @@
     <a href="{{ route('leave.allRecords') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-600 transition duration-300">Back</a>
 </div>
 
-    </div>
+<!-- Sync Alpine.js remarks with textarea -->
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('leaveApproval', () => ({
+            remarks: '',
+            init() {
+                this.remarks = document.getElementById('remarks').value;
+            }
+        }))
+    });
+</script>
+
 </x-app-layout>

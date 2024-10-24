@@ -168,37 +168,37 @@ class LeaveApplicationController extends Controller
         return redirect()->route('leave.index')->with('success', 'Leave application updated successfully.');
     }
 
-    /**
-     * Update the status of a leave application.
-     */
-    public function updateStatus(Request $request, LeaveApplication $leaveApplication)
-    {
-        // Only managers, HODs, and chief editors can update the status
-        if (!Auth::user()->hasAnyRole(['manager', 'hod', 'chief_editor'])) {
-            return redirect()->back()->with('error', 'You do not have permission to approve or reject leave applications.');
-        }
+    // /**
+    //  * Update the status of a leave application.
+    //  */
+    // public function updateStatus(Request $request, LeaveApplication $leaveApplication)
+    // {
+    //     // Only managers, HODs, and chief editors can update the status
+    //     if (!Auth::user()->hasAnyRole(['manager', 'hod', 'chief_editor'])) {
+    //         return redirect()->back()->with('error', 'You do not have permission to approve or reject leave applications.');
+    //     }
     
-        $request->validate([
-            'status' => 'required|in:partially_approved,approved,rejected,cancelled',
-        ]);
+    //     $request->validate([
+    //         'status' => 'required|in:partially_approved,approved,rejected,cancelled',
+    //     ]);
     
-        // Update the leave application status
-        $leaveApplication->update([
-            'status' => $request->status,
-            'modified_by' => Auth::id(),
-            'modified_at' => now(),
-        ]);
+    //     // Update the leave application status
+    //     $leaveApplication->update([
+    //         'status' => $request->status,
+    //         'modified_by' => Auth::id(),
+    //         'modified_at' => now(),
+    //     ]);
     
-        // Log the action in leave_records
-        LeaveRecord::create([
-            'leave_application_id' => $leaveApplication->id,
-            'user_id' => Auth::id(),
-            'action' => $request->status,
-            'action_at' => now(),
-        ]);
+    //     // Log the action in leave_records
+    //     LeaveRecord::create([
+    //         'leave_application_id' => $leaveApplication->id,
+    //         'user_id' => Auth::id(),
+    //         'action' => $request->status,
+    //         'action_at' => now(),
+    //     ]);
     
-        return redirect()->back()->with('success', 'Leave status updated.');
-    }
+    //     return redirect()->back()->with('success', 'Leave status updated.');
+    // }
 
     public function show(LeaveApplication $leaveApplication)
     {
@@ -268,7 +268,15 @@ class LeaveApplicationController extends Controller
     {
         // All roles (manager, HOD, chief editor, admin) can reject
         $leaveApplication->update(['status' => 'rejected', 'remarks' => $request->remarks]);
-        return redirect()->route('leave.show', $leaveApplication)->with('success', 'Leave application rejected.');
+        // Log the action in leave_records
+        LeaveRecord::create([
+            'leave_application_id' => $leaveApplication->id,
+            'user_id' => Auth::id(),
+            'action' => 'rejected',
+            'action_at' => now(),
+            'remarks' => $request->remarks
+        ]);
+        return redirect()->route('leave.allRecords')->with('success', 'Leave application rejected.');
     }
 
 }
