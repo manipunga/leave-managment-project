@@ -51,13 +51,33 @@
 
             <!-- Leave Balance -->
             @php
-                $totalLeavesAllowed = $appSetting->total_leaves;
-                $approvedLeaves = $leaveApplications->where('status', 'approved')->sum(function($leave) {
-                    $startDate = \Carbon\Carbon::parse($leave->start_date);
-                    $endDate = \Carbon\Carbon::parse($leave->end_date);
-                    return $startDate->diffInDays($endDate) + 1;
-                });
-                $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+                // Get current date
+                $currentDate = now();
+
+                // Find the calendar year that the current date falls into
+                $calendarYear = \App\Models\CalendarYear::where('start_date', '<=', $currentDate)
+                    ->where('end_date', '>=', $currentDate)
+                    ->first();
+
+                if ($calendarYear) {
+                    $totalLeavesAllowed = $calendarYear->total_leaves;
+
+                    // Calculate approved leaves for the current calendar year
+                    $approvedLeaves = $leaveApplications->where('calendar_year_id', $calendarYear->id)
+                        ->where('status', 'approved')->sum(function($leave) {
+                            $startDate = \Carbon\Carbon::parse($leave->start_date);
+                            $endDate = \Carbon\Carbon::parse($leave->end_date);
+                            return $startDate->diffInDays($endDate) + 1;
+                        });
+
+                    // Calculate remaining leaves for the current calendar year
+                    $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+                } else {
+                    // If no calendar year is found, default values
+                    $totalLeavesAllowed = 0;
+                    $approvedLeaves = 0;
+                    $remainingLeaves = 0;
+                }
             @endphp
             <div class="grid grid-cols-2 gap-4">
                 <div class="flex items-center">
@@ -69,6 +89,7 @@
                     <span class="ml-2 text-gray-900">{{ $remainingLeaves }} days</span>
                 </div>
             </div>
+
 
             <!-- Remarks -->
             <div>

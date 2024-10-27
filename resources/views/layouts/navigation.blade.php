@@ -27,6 +27,10 @@
                         {{ __('Departments') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('admin.calendar_years.index')" :active="request()->routeIs('admin.calendar_years.index')">
+                        {{ __('Calendar Year') }}
+                    </x-nav-link>
+
                     <x-nav-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.index')">
                         {{ __('App Settings') }}
                     </x-nav-link>

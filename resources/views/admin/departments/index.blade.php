@@ -26,14 +26,14 @@
                             <td class="px-6 py-4 border-b border-gray-200 text-sm flex items-center space-x-4">
 
                                 <!-- Edit Button -->
-                                <a href="{{ route('admin.departments.edit', $department) }}" class="text-blue-500 hover:text-blue-700">
+                                <a href="{{ route('admin.departments.edit', $department) }}" class="bg-yellow-500 text-white font-semibold py-1 px-3 rounded hover:bg-yellow-600">
                                     Edit
                                 </a>
 
                                 <!-- Alpine.js Wrapper -->
                                 <div x-data="{ openModal: false }">
                                     <!-- Delete Button to Open Modal -->
-                                    <button @click="openModal = true" class="text-red-500 hover:text-red-700">
+                                    <button @click="openModal = true" class="bg-red-500 text-white font-semibold py-1 px-3 rounded hover:bg-red-600">
                                         Delete
                                     </button>
 

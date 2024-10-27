@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminAppSettingController;
 use App\Http\Controllers\AdminDepartmentController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\CalendarYearController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +63,12 @@ Route::middleware(['auth'])->group(function () {
     // User management
     Route::get('/admin/users/create', [AdminUserController::class, 'create'])->name('admin.users.create');
     Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::get('/admin/calendar_years', [CalendarYearController::class, 'index'])->name('admin.calendar_years.index');
+    Route::get('/admin/calendar_years/create', [CalendarYearController::class, 'create'])->name('admin.calendar_years.create');
+    Route::post('/admin/calendar_years', [CalendarYearController::class, 'store'])->name('admin.calendar_years.store');
+    Route::get('/admin/calendar_years/{calendarYear}/edit', [CalendarYearController::class, 'edit'])->name('admin.calendar_years.edit');
+    Route::put('/admin/calendar_years/{calendarYear}', [CalendarYearController::class, 'update'])->name('admin.calendar_years.update');
+    Route::delete('/admin/calendar_years/{calendarYear}', [CalendarYearController::class, 'destroy'])->name('admin.calendar_years.destroy');
 
     });
 

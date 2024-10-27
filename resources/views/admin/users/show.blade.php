@@ -19,41 +19,70 @@
             </div>
         </div>
 
-        <!-- Leave Stats Section -->
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Leave Statistics</h2>
-            @php
-                $totalLeavesAllowed = $appSetting->total_leaves;
-                $approvedLeaves = $user->leaveApplications->where('status', 'approved')->sum(function($leave) {
+<!-- Leave Stats Section -->
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Leave Statistics</h2>
+    @php
+        // Get current date
+        $currentDate = now();
+
+        // Find the calendar year that the current date falls into
+        $calendarYear = \App\Models\CalendarYear::where('start_date', '<=', $currentDate)
+            ->where('end_date', '>=', $currentDate)
+            ->first();
+
+        if ($calendarYear) {
+            $totalLeavesAllowed = $calendarYear->total_leaves;
+
+            // Calculate approved leaves for the current calendar year
+            $approvedLeaves = $user->leaveApplications->where('calendar_year_id', $calendarYear->id)
+                ->where('status', 'approved')->sum(function($leave) {
                     return \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1;
                 });
-                $partiallyApprovedLeaves = $user->leaveApplications->where('status', 'partially_approved')->sum(function($leave) {
+
+            // Calculate partially approved leaves for the current calendar year
+            $partiallyApprovedLeaves = $user->leaveApplications->where('calendar_year_id', $calendarYear->id)
+                ->where('status', 'partially_approved')->sum(function($leave) {
                     return \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1;
                 });
-                $pendingLeaves = $user->leaveApplications->where('status', 'pending')->sum(function($leave) {
+
+            // Calculate pending leaves for the current calendar year
+            $pendingLeaves = $user->leaveApplications->where('calendar_year_id', $calendarYear->id)
+                ->where('status', 'pending')->sum(function($leave) {
                     return \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1;
                 });
-                $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
-            @endphp
-            <div class="grid grid-cols-4 gap-6 text-center">
-                <div class="p-4 bg-green-100 rounded-lg">
-                    <strong class="text-green-600 text-xl">{{ $approvedLeaves }} days</strong>
-                    <p class="text-gray-600">Approved Leaves</p>
-                </div>
-                <div class="p-4 bg-blue-100 rounded-lg">
-                    <strong class="text-blue-600 text-xl">{{ $partiallyApprovedLeaves }} days</strong>
-                    <p class="text-gray-600">Partially Approved</p>
-                </div>
-                <div class="p-4 bg-yellow-100 rounded-lg">
-                    <strong class="text-yellow-600 text-xl">{{ $pendingLeaves }} days</strong>
-                    <p class="text-gray-600">Pending Leaves</p>
-                </div>
-                <div class="p-4 bg-red-100 rounded-lg">
-                    <strong class="text-red-600 text-xl">{{ $remainingLeaves }} days</strong>
-                    <p class="text-gray-600">Remaining Leaves</p>
-                </div>
-            </div>
+
+            // Calculate remaining leaves for the current calendar year
+            $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+        } else {
+            // If no calendar year is found, default values
+            $totalLeavesAllowed = 0;
+            $approvedLeaves = 0;
+            $partiallyApprovedLeaves = 0;
+            $pendingLeaves = 0;
+            $remainingLeaves = 0;
+        }
+    @endphp
+    <div class="grid grid-cols-4 gap-6 text-center">
+        <div class="p-4 bg-green-100 rounded-lg">
+            <strong class="text-green-600 text-xl">{{ $approvedLeaves }} days</strong>
+            <p class="text-gray-600">Approved Leaves</p>
         </div>
+        <div class="p-4 bg-blue-100 rounded-lg">
+            <strong class="text-blue-600 text-xl">{{ $partiallyApprovedLeaves }} days</strong>
+            <p class="text-gray-600">Partially Approved</p>
+        </div>
+        <div class="p-4 bg-yellow-100 rounded-lg">
+            <strong class="text-yellow-600 text-xl">{{ $pendingLeaves }} days</strong>
+            <p class="text-gray-600">Pending Leaves</p>
+        </div>
+        <div class="p-4 bg-red-100 rounded-lg">
+            <strong class="text-red-600 text-xl">{{ $remainingLeaves }} days</strong>
+            <p class="text-gray-600">Remaining Leaves</p>
+        </div>
+    </div>
+</div>
+
 
         <!-- Leave Applications List Section -->
         <div class="bg-white shadow-md rounded-lg p-6">

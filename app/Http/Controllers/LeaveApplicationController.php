@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
+use App\Models\CalendarYear;
 use App\Models\LeaveApplication;
 use App\Models\LeaveRecord;
 use Illuminate\Http\Request;
@@ -14,53 +15,55 @@ class LeaveApplicationController extends Controller
 
     public function index()
     {
-        // Get the authenticated user's leave applications
+        // Get the authenticated user's leave applications, ordered by latest first, and paginate the results
         $leaveApplications = LeaveApplication::where('user_id', Auth::id())
-        ->get();
-
+            ->orderBy('created_at', 'desc') // Order by the latest leave applications
+            ->paginate(20); // Paginate with 10 items per page
+    
         // Get the total allowed leaves from AppSetting
         $appSetting = AppSetting::first();
-
+    
         $title = 'Your Leave Applications';
-
-        // Pass the leave applications and app settings to the view
+    
+        // Pass the leave applications, app settings, and title to the view
         return view('leave.index', compact('leaveApplications', 'appSetting', 'title'));
     }
+    
 
     public function allRecords()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    // Admin can view and edit all leave applications
-    if ($user->hasRole('admin')) {
-        $leaveApplications = LeaveApplication::with('user.departments')->get();
-    }
-    // Managers can see leave applications of subordinates in their department(s)
-    elseif ($user->hasRole('manager')) {
-        $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
-            $query->whereIn('department_id', $user->departments->pluck('id'));
-        })->get();
-    }
-    // HODs can see leave applications of employees and managers in their department(s)
-    elseif ($user->hasRole('hod')) {
-        $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
-            $query->whereIn('department_id', $user->departments->pluck('id'));
-        })->get();
-    }
-    // HR can see all leave applications
-    elseif ($user->hasRole('hr')) {
-        $leaveApplications = LeaveApplication::with('user.departments')->get();
-    }
-    // Chief Editors can see all leave applications
-    elseif ($user->hasRole('chief_editor')) {
-        $leaveApplications = LeaveApplication::with('user.departments')->get();
-    }
+        // Admin can view and edit all leave applications
+        if ($user->hasRole('admin')) {
+            $leaveApplications = LeaveApplication::with('user.departments')->orderBy('created_at', 'desc')->paginate(20);
+        }
+        // Managers can see leave applications of subordinates in their department(s)
+        elseif ($user->hasRole('manager')) {
+            $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
+                $query->whereIn('department_id', $user->departments->pluck('id'));
+            })->orderBy('created_at', 'desc')->paginate(20);
+        }
+        // HODs can see leave applications of employees and managers in their department(s)
+        elseif ($user->hasRole('hod')) {
+            $leaveApplications = LeaveApplication::with('user.departments')->whereHas('user.departments', function ($query) use ($user) {
+                $query->whereIn('department_id', $user->departments->pluck('id'));
+            })->orderBy('created_at', 'desc')->paginate(20);
+        }
+        // HR can see all leave applications
+        elseif ($user->hasRole('hr')) {
+            $leaveApplications = LeaveApplication::with('user.departments')->orderBy('created_at', 'desc')->paginate(20);
+        }
+        // Chief Editors can see all leave applications
+        elseif ($user->hasRole('chief_editor')) {
+            $leaveApplications = LeaveApplication::with('user.departments')->orderBy('created_at', 'desc')->paginate(20);
+        }
 
-    // Set the title for the page
-    $title = 'All Leave Records';
+        // Set the title for the page
+        $title = 'All Leave Records';
 
-    return view('leave.all-records', compact('leaveApplications', 'title'));
-}
+        return view('leave.all-records', compact('leaveApplications', 'title'));
+    }
 
         /**
      * Show the form to apply for leave.
@@ -85,46 +88,58 @@ class LeaveApplicationController extends Controller
     /**
      * Store a newly created leave application in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'leave_type' => 'required|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
 
-        // Calculate the number of days requested
-        $startDate = new \DateTime($request->start_date);
-        $endDate = new \DateTime($request->end_date);
-        $daysRequested = $startDate->diff($endDate)->days + 1;
-
-        // Get the total leaves allowed and the leaves already taken by the user
-        $appSetting = AppSetting::first();
-        $totalLeavesAllowed = $appSetting->total_leaves;
-
-        $leavesTaken = LeaveApplication::where('user_id', Auth::id())
-            ->whereIn('status', ['approved'])
-            ->sum(\DB::raw('DATEDIFF(end_date, start_date) + 1'));
-
-        $remainingLeaves = $totalLeavesAllowed - $leavesTaken;
-
-        // Check if the user is trying to take more leaves than allowed
-        if ($daysRequested > $remainingLeaves) {
-            return redirect()->back()->withErrors(['error' => 'You do not have enough remaining leaves.']);
-        }
-
-        // Store the leave application
-        $leaveApplication = LeaveApplication::create([
-            'user_id' => Auth::id(),
-            'leave_type' => $request->leave_type,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'status' => 'pending',
-            'applied_at' => now(),
-        ]);
-
-        return redirect()->route('leave.index')->with('success', 'Leave application submitted successfully.');
-    }
+     public function store(Request $request)
+     {
+         $request->validate([
+             'leave_type' => 'required|string',
+             'start_date' => 'required|date',
+             'end_date' => 'required|date|after_or_equal:start_date',
+         ]);
+     
+         // Calculate the number of days requested
+         $startDate = new \DateTime($request->start_date);
+         $endDate = new \DateTime($request->end_date);
+         $daysRequested = $startDate->diff($endDate)->days + 1;
+     
+         // Find the calendar year that the leave dates fall into
+         $calendarYear = CalendarYear::where('start_date', '<=', $startDate)
+             ->where('end_date', '>=', $endDate)
+             ->first();
+     
+         if (!$calendarYear) {
+             return redirect()->back()->withErrors(['error' => 'No calendar year found for the selected dates.']);
+         }
+     
+         // Get the total leaves allowed for the found calendar year
+         $totalLeavesAllowed = $calendarYear->total_leaves;
+     
+         // Calculate leaves already taken by the user for the found calendar year
+         $leavesTaken = LeaveApplication::where('user_id', Auth::id())
+             ->where('calendar_year_id', $calendarYear->id)
+             ->whereIn('status', ['approved'])
+             ->sum(\DB::raw('DATEDIFF(end_date, start_date) + 1'));
+     
+         $remainingLeaves = $totalLeavesAllowed - $leavesTaken;
+     
+         // Check if the user is trying to take more leaves than allowed
+         if ($daysRequested > $remainingLeaves) {
+             return redirect()->back()->withErrors(['error' => 'You do not have enough remaining leaves for ' . $calendarYear->name . '.']);
+         }
+     
+         // Store the leave application with the linked calendar year
+         $leaveApplication = LeaveApplication::create([
+             'user_id' => Auth::id(),
+             'leave_type' => $request->leave_type,
+             'start_date' => $request->start_date,
+             'end_date' => $request->end_date,
+             'status' => 'pending',
+             'applied_at' => now(),
+             'calendar_year_id' => $calendarYear->id, // Link to the calendar year
+         ]);
+     
+         return redirect()->route('leave.index')->with('success', 'Leave application submitted successfully.');
+     }
 
 
     public function edit(LeaveApplication $leaveApplication)

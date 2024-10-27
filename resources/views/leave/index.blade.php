@@ -11,6 +11,18 @@
                 </span>
             </div>
         @endif
+
+        <!-- Display Success Message if Present -->
+        @if(session('success'))
+            <div x-data="{ show: true }" x-show="show" class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Success!</strong>
+                <span class="block sm:inline">{{ session('success') }}</span>
+                <span @click="show = false" class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                    <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 00-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 001.414 1.414L10 11.414l2.934-2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/></svg>
+                </span>
+            </div>
+        @endif
+
         
         <!-- Page Heading -->
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Leave Applications</h2>
@@ -19,23 +31,51 @@
         <div class="bg-white shadow-md rounded-lg p-6 mb-5">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Leave Statistics</h2>
             @php
-                $totalLeavesAllowed = $appSetting->total_leaves;
-                $approvedLeaves = $leaveApplications->where('status', 'approved')->sum(function($leave) {
-                    $startDate = \Carbon\Carbon::parse($leave->start_date);
-                    $endDate = \Carbon\Carbon::parse($leave->end_date);
-                    return $startDate->diffInDays($endDate) + 1;
-                });
-                $pendingLeaves = $leaveApplications->where('status', 'pending')->sum(function($leave) {
-                    $startDate = \Carbon\Carbon::parse($leave->start_date);
-                    $endDate = \Carbon\Carbon::parse($leave->end_date);
-                    return $startDate->diffInDays($endDate) + 1;
-                });
-                $partiallyApprovedLeaves = $leaveApplications->where('status', 'partially_approved')->sum(function($leave) {
-                    $startDate = \Carbon\Carbon::parse($leave->start_date);
-                    $endDate = \Carbon\Carbon::parse($leave->end_date);
-                    return $startDate->diffInDays($endDate) + 1;
-                });
-                $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+                // Get current date
+                $currentDate = now();
+
+                // Find the calendar year that the current date falls into
+                $calendarYear = \App\Models\CalendarYear::where('start_date', '<=', $currentDate)
+                    ->where('end_date', '>=', $currentDate)
+                    ->first();
+
+                if ($calendarYear) {
+                    $totalLeavesAllowed = $calendarYear->total_leaves;
+
+                    // Calculate approved leaves for the current calendar year
+                    $approvedLeaves = $leaveApplications->where('calendar_year_id', $calendarYear->id)
+                        ->where('status', 'approved')->sum(function($leave) {
+                            $startDate = \Carbon\Carbon::parse($leave->start_date);
+                            $endDate = \Carbon\Carbon::parse($leave->end_date);
+                            return $startDate->diffInDays($endDate) + 1;
+                        });
+
+                    // Calculate pending leaves for the current calendar year
+                    $pendingLeaves = $leaveApplications->where('calendar_year_id', $calendarYear->id)
+                        ->where('status', 'pending')->sum(function($leave) {
+                            $startDate = \Carbon\Carbon::parse($leave->start_date);
+                            $endDate = \Carbon\Carbon::parse($leave->end_date);
+                            return $startDate->diffInDays($endDate) + 1;
+                        });
+
+                    // Calculate partially approved leaves for the current calendar year
+                    $partiallyApprovedLeaves = $leaveApplications->where('calendar_year_id', $calendarYear->id)
+                        ->where('status', 'partially_approved')->sum(function($leave) {
+                            $startDate = \Carbon\Carbon::parse($leave->start_date);
+                            $endDate = \Carbon\Carbon::parse($leave->end_date);
+                            return $startDate->diffInDays($endDate) + 1;
+                        });
+
+                    // Calculate remaining leaves for the current calendar year
+                    $remainingLeaves = $totalLeavesAllowed - $approvedLeaves;
+                } else {
+                    // If no calendar year is found, default values
+                    $totalLeavesAllowed = 0;
+                    $approvedLeaves = 0;
+                    $pendingLeaves = 0;
+                    $partiallyApprovedLeaves = 0;
+                    $remainingLeaves = 0;
+                }
             @endphp
             <div class="grid grid-cols-4 gap-6 text-center">
                 <div class="p-4 bg-green-100 rounded-lg">
@@ -56,8 +96,6 @@
                 </div>
             </div>
         </div>
-
-
 
         <!-- Apply for Leave Button -->
         <div class="mb-6 flex justify-end">
@@ -121,6 +159,11 @@
                     @endforeach
                 </tbody>
             </table>
+
+            <!-- Pagination Links -->
+            <div class="p-6">
+                {{ $leaveApplications->links() }}
+            </div>
 
             @if($leaveApplications->isEmpty())
                 <div class="px-6 py-4 text-gray-500">

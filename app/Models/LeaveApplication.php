@@ -36,5 +36,10 @@ class LeaveApplication extends Model
         return $this->hasMany(LeaveRecord::class);
     }
 
-    
+    public function calendarYear()
+    {
+        return $this->belongsTo(CalendarYear::class);
+    }
+
+
 }
